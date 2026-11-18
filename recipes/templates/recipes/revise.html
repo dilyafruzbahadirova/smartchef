@@ -1,0 +1,73 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="{{ language }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SmartChef · AI Editor</title>
+  <link rel="stylesheet" href="{% static 'recipes/style.css' %}">
+  <script src="{% static 'recipes/revise.js' %}" defer></script>
+</head>
+<body>
+<main class="page-shell">
+  <header class="topbar">
+    <a class="brand" href="{% url 'recipes:index' %}?language={{ language }}"><span class="brand-mark">S</span><span>SmartChef</span></a>
+    <a class="saved-link" href="{% url 'recipes:saved_recipes' %}?language={{ language }}">← {% if language == 'ru' %}Мои рецепты{% else %}Менің рецепттерім{% endif %}</a>
+  </header>
+  <section class="intro">
+    <div>
+      <p class="eyebrow">SMARTCHEF · AI EDITOR</p>
+      <h1>{% if language == 'ru' %}Предложение для рецепта{% else %}Рецептке AI ұсынысы{% endif %}</h1>
+      <p class="intro-text">{% if language == 'ru' %}Получите предложение и сравните с оригиналом. Рецепт изменится только после подтверждения.{% else %}Ұсыныс алып, бастапқы рецептпен салыстыр. Рецепт тек қабылдағаннан кейін өзгереді.{% endif %}</p>
+    </div>
+  </section>
+  {% if message %}<div class="sc-editor-notice" role="status">{{ message }}</div>{% endif %}
+  {% if error %}<div class="sc-editor-error" role="alert">{{ error }}</div>{% endif %}
+  <section class="card sc-editor-request">
+    <h2>{% if language == 'ru' %}Что изменить?{% else %}Нені өзгертеміз?{% endif %}</h2>
+    <form method="post" id="sc-proposal-form">
+      {% csrf_token %}
+      <input type="hidden" name="language" value="{{ language }}">
+      <input type="hidden" name="action" value="request">
+      <label for="sc-instruction">{% if language == 'ru' %}Ваш запрос (3–300 символов){% else %}Сұрауыңыз (3–300 таңба){% endif %}</label>
+      <textarea id="sc-instruction" name="instruction" required minlength="3" maxlength="300" rows="4" placeholder="{% if language == 'ru' %}Например: убери соль и добавь овощи{% else %}Мысалы: тұзды алып тастап, көкөніс қос{% endif %}">{{ instruction }}</textarea>
+      <div class="sc-editor-submit-row">
+        <button class="button button-primary" id="sc-proposal-button" type="submit" {% if not current %}disabled{% endif %}>✦ {% if language == 'ru' %}Получить предложение{% else %}Ұсыныс алу{% endif %}</button>
+        <span id="sc-proposal-wait" class="sc-editor-wait" role="status" aria-live="polite" hidden>{% if language == 'ru' %}Подождите, AI готовит предложение…{% else %}Күте тұрыңыз, AI ұсыныс дайындап жатыр…{% endif %}</span>
+      </div>
+    </form>
+    {% if not current %}<p class="sc-editor-error">{% if language == 'ru' %}Для старого текстового рецепта предложения пока недоступны.{% else %}Ескі мәтіндік рецептке әзірге ұсыныс алу қолжетімсіз.{% endif %}</p>{% endif %}
+  </section>
+  {% if can_undo %}
+  <form method="post" class="sc-editor-undo">{% csrf_token %}<input type="hidden" name="language" value="{{ language }}"><input type="hidden" name="action" value="undo"><input type="hidden" name="pending_token" value="{{ undo_token }}"><button type="submit" class="button button-accent">↶ {% if language == 'ru' %}Отменить последнее изменение{% else %}Соңғы өзгерісті қайтару{% endif %}</button></form>
+  {% endif %}
+  <div class="sc-editor-columns">
+    <section class="card sc-editor-recipe">
+      <span class="recipe-label">{% if language == 'ru' %}ИСХОДНЫЙ РЕЦЕПТ{% else %}БАСТАПҚЫ РЕЦЕПТ{% endif %}</span>
+      {% if current %}
+        <h2>{{ current.title }}</h2>
+        <h3>{% if language == 'ru' %}Ингредиенты{% else %}Құрамы{% endif %}</h3>
+        <ul>{% for value in current.ingredients %}<li>{{ value }}</li>{% endfor %}</ul>
+        <h3>{% if language == 'ru' %}Шаги{% else %}Қадамдар{% endif %}</h3>
+        <ol>{% for value in current.steps %}<li>{{ value }}</li>{% endfor %}</ol>
+      {% else %}<div class="recipe-text">{{ item.recipe }}</div>{% endif %}
+    </section>
+    <section class="card sc-editor-recipe">
+      <span class="recipe-label">{% if language == 'ru' %}ПРЕДЛОЖЕНИЕ AI{% else %}AI ҰСЫНЫСЫ{% endif %}</span>
+      {% if suggested %}
+        <h2>{{ suggested.title }}</h2>
+        <h3>{% if language == 'ru' %}Ингредиенты{% else %}Құрамы{% endif %}</h3>
+        <ul>{% for value in suggested.ingredients %}<li>{{ value }}</li>{% endfor %}</ul>
+        <h3>{% if language == 'ru' %}Шаги{% else %}Қадамдар{% endif %}</h3>
+        <ol>{% for value in suggested.steps %}<li>{{ value }}</li>{% endfor %}</ol>
+        <div class="sc-editor-submit-row">
+          <form method="post">{% csrf_token %}<input type="hidden" name="language" value="{{ language }}"><input type="hidden" name="action" value="accept"><input type="hidden" name="pending_token" value="{{ pending_token }}"><button class="button button-primary" type="submit">{% if language == 'ru' %}Принять{% else %}Қабылдау{% endif %}</button></form>
+          <form method="post">{% csrf_token %}<input type="hidden" name="language" value="{{ language }}"><input type="hidden" name="action" value="reject"><input type="hidden" name="pending_token" value="{{ pending_token }}"><button class="button button-accent" type="submit">{% if language == 'ru' %}Отклонить{% else %}Бас тарту{% endif %}</button></form>
+        </div>
+        <p class="sc-editor-notice">{% if language == 'ru' %}Это только предварительный просмотр. Рецепт не сохранён.{% else %}Бұл тек алдын ала қарау. Рецепт сақталған жоқ.{% endif %}</p>
+      {% else %}<p>{% if language == 'ru' %}Пока нет предложения.{% else %}Әзірге ұсыныс жоқ.{% endif %}</p>{% endif %}
+    </section>
+  </div>
+</main>
+</body>
+</html>

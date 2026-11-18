@@ -1,0 +1,914 @@
+{% load static %}
+
+<!DOCTYPE html>
+
+<html lang="{{ language }}">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>SmartChef</title>
+
+    <link rel="stylesheet" href="{% static 'recipes/style.css' %}">
+
+    <script src="{% static 'recipes/catalog.js' %}" defer></script>
+
+</head>
+
+<body>
+
+{% autoescape on %}
+
+
+
+<main class="page-shell">
+
+    <header class="topbar">
+
+        <a class="brand" href="{% url 'recipes:index' %}?language={{ language }}">
+
+            <span class="brand-mark">S</span>
+
+            <span>SmartChef</span>
+
+        </a>
+
+
+
+        <a class="saved-link"
+
+           href="{% url 'recipes:saved_recipes' %}?language={{ language }}">
+
+            {% if language == "ru" %}
+
+                Мои рецепты
+
+            {% else %}
+
+                Менің рецепттерім
+
+            {% endif %}
+
+        </a>
+
+    </header>
+
+
+
+    <section class="intro">
+
+        <div>
+
+            <p class="eyebrow">SMARTCHEF</p>
+
+
+
+            {% if language == "ru" %}
+
+                <h1>Выберите продукты.<br>Остальное сделает SmartChef.</h1>
+
+                <p class="intro-text">
+
+                    Выберите продукты из каталога или добавьте свои.
+
+                    SmartChef составит один понятный рецепт с учётом
+
+                    времени и ваших настроек.
+
+                </p>
+
+            {% else %}
+
+                <h1>Өнімдерді таңда.<br>Қалғанын SmartChef жасайды.</h1>
+
+                <p class="intro-text">
+
+                    Анықтамалықтан өнімдерді таңда немесе өз өніміңді қос.
+
+                    SmartChef уақыт пен баптауларды ескеріп,
+
+                    бір түсінікті рецепт құрастырады.
+
+                </p>
+
+            {% endif %}
+
+        </div>
+
+
+
+        <div class="steps" aria-label="Workflow">
+
+            <span class="step active">
+
+                <b>1</b>
+
+                {% if language == "ru" %}Выбор{% else %}Таңдау{% endif %}
+
+            </span>
+
+            <span class="step-line"></span>
+
+            <span class="step">
+
+                <b>2</b>
+
+                Рецепт
+
+            </span>
+
+            <span class="step-line"></span>
+
+            <span class="step">
+
+                <b>3</b>
+
+                {% if language == "ru" %}Сохранение{% else %}Сақтау{% endif %}
+
+            </span>
+
+        </div>
+
+    </section>
+
+
+
+    <form method="post" class="recipe-form" id="recipe-form">
+
+        {% csrf_token %}
+
+
+
+        <section class="workspace">
+
+            <div class="catalog-panel card">
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <span class="section-number">01</span>
+
+                        {% if language == "ru" %}
+
+                            <h2>Каталог продуктов</h2>
+
+                            <p>Найдите нужные продукты и отметьте их.</p>
+
+                        {% else %}
+
+                            <h2>Өнімдер анықтамалығы</h2>
+
+                            <p>Қажетті өнімдерді тауып, таңда.</p>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="catalog-search-wrap">
+
+                    <span class="search-icon" aria-hidden="true">⌕</span>
+
+
+
+                    <input
+
+                        type="search"
+
+                        id="catalog-search"
+
+                        class="catalog-search"
+
+                        autocomplete="off"
+
+                        {% if language == "ru" %}
+
+                            placeholder="Поиск: картофель, молоко, рис..."
+
+                            aria-label="Поиск продуктов"
+
+                        {% else %}
+
+                            placeholder="Іздеу: картоп, сүт, күріш..."
+
+                            aria-label="Өнімдерді іздеу"
+
+                        {% endif %}
+
+                    >
+
+                </div>
+
+
+
+                <div class="category-filters" aria-label="Categories">
+
+                    <button
+
+                        type="button"
+
+                        class="category-button active"
+
+                        data-category="all"
+
+                        aria-pressed="true"
+
+                    >
+
+                        {% if language == "ru" %}Все{% else %}Барлығы{% endif %}
+
+                    </button>
+
+
+
+                    {% for category in categories %}
+
+                        <button
+
+                            type="button"
+
+                            class="category-button"
+
+                            data-category="{{ category.id }}"
+
+                            aria-pressed="false"
+
+                        >
+
+                            <span>{{ category.emoji }}</span>
+
+                            {% if language == "kk" %}
+
+                                {{ category.kk }}
+
+                            {% else %}
+
+                                {{ category.ru }}
+
+                            {% endif %}
+
+                        </button>
+
+                    {% endfor %}
+
+                </div>
+
+
+
+                <div class="product-grid" id="catalog-products">
+
+                    {% for product in catalog_products %}
+
+                        <label
+
+                            class="product-card"
+
+                            data-product-id="{{ product.id }}"
+
+                            data-category="{{ product.category }}"
+
+                        >
+
+                            <input
+
+                                type="checkbox"
+
+                                name="selected_products"
+
+                                value="{{ product.id }}"
+
+                                {% if product.id in selected_products %}checked{% endif %}
+
+                            >
+
+
+
+                            <span class="product-check" aria-hidden="true">✓</span>
+
+
+
+                            <span class="product-name">
+
+                                {% if language == "kk" %}
+
+                                    {{ product.kk }}
+
+                                {% else %}
+
+                                    {{ product.ru }}
+
+                                {% endif %}
+
+                            </span>
+
+                        </label>
+
+                    {% endfor %}
+
+                </div>
+
+
+
+                <div id="catalog-no-results" class="catalog-message" hidden>
+
+                    {% if language == "ru" %}
+
+                        По этому запросу продуктов не найдено.
+
+                    {% else %}
+
+                        Бұл іздеу бойынша өнім табылмады.
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+
+
+            <aside class="settings-panel">
+
+                <section class="card selection-card">
+
+                    <div class="selection-header">
+
+                        <div>
+
+                            <span class="section-number">02</span>
+
+                            {% if language == "ru" %}
+
+                                <h2>Выбранные продукты</h2>
+
+                            {% else %}
+
+                                <h2>Таңдалған өнімдер</h2>
+
+                            {% endif %}
+
+                        </div>
+
+
+
+                        <span
+
+                            class="catalog-count"
+
+                            id="catalog-count"
+
+                            aria-live="polite"
+
+                        >
+
+                            {{ selected_products|length }}
+
+                        </span>
+
+                    </div>
+
+
+
+                    <div id="catalog-selected" class="selected-tags"></div>
+
+
+
+                    <p
+
+                        id="catalog-empty-selection"
+
+                        class="empty-selection"
+
+                        {% if selected_products %}hidden{% endif %}
+
+                    >
+
+                        {% if language == "ru" %}
+
+                            Пока ничего не выбрано. Выберите продукты
+
+                            слева или введите свои ниже.
+
+                        {% else %}
+
+                            Әзірге өнім таңдалмады. Сол жақтан өнім таңда
+
+                            немесе төменге өз өніміңді жаз.
+
+                        {% endif %}
+
+                    </p>
+
+
+
+                    <button
+
+                        type="button"
+
+                        class="clear-button"
+
+                        id="catalog-clear"
+
+                        {% if not selected_products %}disabled{% endif %}
+
+                    >
+
+                        {% if language == "ru" %}
+
+                            Очистить выбор
+
+                        {% else %}
+
+                            Таңдауды тазалау
+
+                        {% endif %}
+
+                    </button>
+
+                </section>
+
+
+
+                <section class="card settings-card">
+
+                    <div class="section-heading compact">
+
+                        <div>
+
+                            <span class="section-number">03</span>
+
+                            {% if language == "ru" %}
+
+                                <h2>Настройки рецепта</h2>
+
+                            {% else %}
+
+                                <h2>Рецепт баптаулары</h2>
+
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+
+
+                    <div class="field-group">
+
+                        <label for="products">
+
+                            {% if language == "ru" %}
+
+                                Дополнительные продукты
+
+                            {% else %}
+
+                                Қосымша өнімдер
+
+                            {% endif %}
+
+                        </label>
+
+
+
+                        <textarea
+
+                            id="products"
+
+                            name="products"
+
+                            maxlength="500"
+
+                            {% if language == "ru" %}
+
+                                placeholder="Например: чеснок, зелень, сметана..."
+
+                            {% else %}
+
+                                placeholder="Мысалы: сарымсақ, көк шөп, қаймақ..."
+
+                            {% endif %}
+
+                        >{{ products }}</textarea>
+
+
+
+                        <small>
+
+                            {% if language == "ru" %}
+
+                                Необязательно. Здесь можно написать продукты,
+
+                                которых нет в каталоге.
+
+                            {% else %}
+
+                                Міндетті емес. Мұнда анықтамалықта жоқ
+
+                                өнімдерді жазуға болады.
+
+                            {% endif %}
+
+                        </small>
+
+                    </div>
+
+
+
+                    <fieldset class="field-group">
+
+                        <legend>
+
+                            {% if language == "ru" %}
+
+                                Время приготовления
+
+                            {% else %}
+
+                                Дайындау уақыты
+
+                            {% endif %}
+
+                        </legend>
+
+
+
+                        <div class="time-grid">
+
+                            <label class="time-option">
+
+                                <input
+
+                                    type="radio"
+
+                                    name="minutes"
+
+                                    value="15"
+
+                                    {% if minutes == "15" %}checked{% endif %}
+
+                                >
+
+                                <span><strong>15</strong> мин</span>
+
+                            </label>
+
+
+
+                            <label class="time-option">
+
+                                <input
+
+                                    type="radio"
+
+                                    name="minutes"
+
+                                    value="30"
+
+                                    {% if minutes == "30" %}checked{% endif %}
+
+                                >
+
+                                <span><strong>30</strong> мин</span>
+
+                            </label>
+
+
+
+                            <label class="time-option">
+
+                                <input
+
+                                    type="radio"
+
+                                    name="minutes"
+
+                                    value="60"
+
+                                    {% if minutes == "60" %}checked{% endif %}
+
+                                >
+
+                                <span><strong>60</strong> мин</span>
+
+                            </label>
+
+                        </div>
+
+                    </fieldset>
+
+
+
+                    <label class="vegetarian-option">
+
+                        <span>
+
+                            <strong>
+
+                                {% if language == "ru" %}
+
+                                    Вегетарианский рецепт
+
+                                {% else %}
+
+                                    Вегетариандық рецепт
+
+                                {% endif %}
+
+                            </strong>
+
+
+
+                            <small>
+
+                                {% if language == "ru" %}
+
+                                    Без мяса, птицы, рыбы и морепродуктов
+
+                                {% else %}
+
+                                    Ет, құс еті, балық және теңіз өнімдерінсіз
+
+                                {% endif %}
+
+                            </small>
+
+                        </span>
+
+
+
+                        <span class="switch">
+
+                            <input
+
+                                type="checkbox"
+
+                                name="vegetarian"
+
+                                value="1"
+
+                                {% if vegetarian %}checked{% endif %}
+
+                            >
+
+                            <span class="switch-track"></span>
+
+                        </span>
+
+                    </label>
+
+
+
+                    <fieldset class="field-group">
+
+                        <legend>
+
+                            {% if language == "ru" %}Язык{% else %}Тіл{% endif %}
+
+                        </legend>
+
+
+
+                        <div class="language-grid">
+
+                            <label class="language-option">
+
+                                <input
+
+                                    type="radio"
+
+                                    name="language"
+
+                                    value="kk"
+
+                                    {% if language == "kk" %}checked{% endif %}
+
+                                >
+
+                                <span>Қазақша</span>
+
+                            </label>
+
+
+
+                            <label class="language-option">
+
+                                <input
+
+                                    type="radio"
+
+                                    name="language"
+
+                                    value="ru"
+
+                                    {% if language == "ru" %}checked{% endif %}
+
+                                >
+
+                                <span>Русский</span>
+
+                            </label>
+
+                        </div>
+
+                    </fieldset>
+
+
+
+                    {% if error %}
+
+                        <div class="error-message" role="alert">
+
+                            <strong>
+
+                                {% if language == "ru" %}
+
+                                    Не получилось
+
+                                {% else %}
+
+                                    Қате пайда болды
+
+                                {% endif %}
+
+                            </strong>
+
+                            <span>{{ error }}</span>
+
+                        </div>
+
+                    {% endif %}
+
+
+
+                    <div class="form-actions">
+
+                        <button
+
+                            type="submit"
+
+                            name="action"
+
+                            value="language"
+
+                            class="button button-accent"
+
+                        >
+
+                            {% if language == "ru" %}
+
+                                Применить язык
+
+                            {% else %}
+
+                                Тілді қолдану
+
+                            {% endif %}
+
+                        </button>
+
+
+
+                        <button
+
+                            type="submit"
+
+                            name="action"
+
+                            value="generate"
+
+                            class="button button-primary generate-button"
+
+                        >
+
+                            <span aria-hidden="true">✦</span>
+
+                            {% if language == "ru" %}
+
+                                Создать рецепт
+
+                            {% else %}
+
+                                Рецепт жасау
+
+                            {% endif %}
+
+                        </button>
+
+                    </div>
+
+                </section>
+
+            </aside>
+
+        </section>
+
+    </form>
+
+
+
+    {% if recipe %}
+
+        <section class="result-card card">
+
+            <div class="result-heading">
+
+                <div>
+
+                    <p class="eyebrow">SMARTCHEF AI</p>
+
+
+
+                    {% if language == "ru" %}
+
+                        <h2>Ваш рецепт готов</h2>
+
+                        <p>Рецепт создан из выбранных вами продуктов.</p>
+
+                    {% else %}
+
+                        <h2>Рецептің дайын</h2>
+
+                        <p>Рецепт сен таңдаған өнімдер негізінде жасалды.</p>
+
+                    {% endif %}
+
+                </div>
+
+
+
+                <span class="result-icon" aria-hidden="true">✦</span>
+
+            </div>
+
+
+
+            {% if structured_recipe %}
+                <h3 class="sc-recipe-title">{{ structured_recipe.title }}</h3>
+                <h3>{% if language == "ru" %}Ингредиенты{% else %}Құрамы{% endif %}</h3>
+                <ul class="sc-ingredients">{% for ingredient in structured_recipe.ingredients %}<li>{{ ingredient }}</li>{% endfor %}</ul>
+                <h3>{% if language == "ru" %}Приготовление{% else %}Дайындау жолы{% endif %}</h3>
+                <ol class="sc-ingredients">{% for step in structured_recipe.steps %}<li>{{ step }}</li>{% endfor %}</ol>
+                <a class="button button-primary sc-start" href="{% url 'recipes:cook' %}">🍳 {% if language == "ru" %}Начать готовить{% else %}Дайындауды бастау{% endif %}</a>
+                {% else %}<div class="recipe-text">{{ recipe }}</div>{% endif %}
+
+
+
+            {% if can_save %}
+
+                <form
+
+                    method="post"
+
+                    action="{% url 'recipes:save_recipe' %}"
+
+                    class="save-form"
+
+                >
+
+                    {% csrf_token %}
+
+
+
+                    <button type="submit" class="button button-primary">
+
+                        {% if language == "ru" %}
+
+                            Сохранить рецепт
+
+                        {% else %}
+
+                            Рецептті сақтау
+
+                        {% endif %}
+
+                    </button>
+
+                </form>
+
+            {% endif %}
+
+        </section>
+
+    {% endif %}
+
+</main>
+
+
+
+{{ catalog_data|json_script:"product-catalog-data" }}
+
+
+
+{% endautoescape %}
+
+</body>
+
+</html>

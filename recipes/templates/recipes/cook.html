@@ -1,0 +1,11 @@
+{% load static %}
+<!DOCTYPE html><html lang="{{ language }}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SmartChef | Cooking Mode</title><link rel="stylesheet" href="{% static 'recipes/style.css' %}"><script src="{% static 'recipes/cook.js' %}" defer></script></head>
+<body><main class="page-shell sc-cook-page">
+<header class="topbar"><a class="brand" href="{% url 'recipes:index' %}?draft=1"><span class="brand-mark">S</span><span>SmartChef</span></a><a class="saved-link" href="{% url 'recipes:index' %}?draft=1">{% if language == 'ru' %}Выйти к рецепту{% else %}Рецептке оралу{% endif %}</a></header>
+<section class="sc-cook-hero"><span class="sc-kicker">SMARTCHEF / COOKING MODE</span><h1>{{ recipe_data.title }}</h1><p>{% if language == 'ru' %}Готовьте шаг за шагом в своём темпе.{% else %}Әр қадамды өз қарқыныңмен орында.{% endif %}</p></section>
+<section class="sc-cook-layout"><article class="card sc-cook-card" id="cooking-app" data-language="{{ language }}" data-token="{{ draft_token }}">
+<div class="sc-progress-meta"><strong id="step-count"></strong><strong id="done-count"></strong></div><div class="sc-progress-track"><div id="progress-fill"></div></div>
+<div id="step-panel"><p class="sc-kicker" id="step-label"></p><h2 id="step-description"></h2><div class="sc-cook-actions"><button type="button" id="step-back" class="button button-accent"></button><button type="button" id="step-confirm" class="button button-primary"></button></div></div>
+<div id="finish-panel" hidden><div class="sc-finish-icon">✓</div><h2>{% if language == 'ru' %}Блюдо готово!{% else %}Тағам дайын!{% endif %}</h2><p>{% if language == 'ru' %}Все шаги выполнены.{% else %}Барлық қадам орындалды.{% endif %}</p><button type="button" id="step-restart" class="button button-primary">{% if language == 'ru' %}Начать заново{% else %}Қайта бастау{% endif %}</button></div>
+</article><aside class="card sc-cook-sidebar"><h3>{% if language == 'ru' %}Все шаги{% else %}Қадамдар тізімі{% endif %}</h3><ol id="steps-list"></ol><h3>{% if language == 'ru' %}Ингредиенты{% else %}Қажетті өнімдер{% endif %}</h3><ul class="sc-ingredients">{% for item in recipe_data.ingredients %}<li>{{ item }}</li>{% endfor %}</ul></aside></section>
+</main>{{ recipe_data|json_script:'cooking-recipe-data' }}</body></html>
